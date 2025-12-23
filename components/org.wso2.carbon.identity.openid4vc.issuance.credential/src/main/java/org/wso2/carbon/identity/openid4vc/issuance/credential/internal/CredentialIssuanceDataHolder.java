@@ -21,6 +21,8 @@ package org.wso2.carbon.identity.openid4vc.issuance.credential.internal;
 import org.wso2.carbon.identity.oauth.tokenprocessor.DefaultTokenProvider;
 import org.wso2.carbon.identity.oauth.tokenprocessor.TokenProvider;
 import org.wso2.carbon.identity.openid4vc.issuance.credential.issuer.handlers.CredentialFormatHandler;
+import org.wso2.carbon.identity.openid4vc.issuance.credential.nonce.NonceManager;
+import org.wso2.carbon.identity.openid4vc.issuance.credential.proof.ProofValidationService;
 import org.wso2.carbon.identity.openid4vc.template.management.VCTemplateManager;
 import org.wso2.carbon.user.core.service.RealmService;
 
@@ -37,6 +39,8 @@ public class CredentialIssuanceDataHolder {
     private final List<CredentialFormatHandler> credentialFormatHandlers = new ArrayList<>();
     private TokenProvider tokenProvider;
     private RealmService realmService;
+    private NonceManager nonceManager;
+    private ProofValidationService proofValidationService;
 
     private CredentialIssuanceDataHolder() {
 
@@ -91,5 +95,25 @@ public class CredentialIssuanceDataHolder {
 
     public void setRealmService(RealmService realmService) {
         this.realmService = realmService;
+    }
+
+    public NonceManager getNonceManager() {
+
+        return nonceManager;
+    }
+
+    public void setNonceManager(NonceManager nonceManager) {
+
+        this.nonceManager = nonceManager;
+    }
+
+    public ProofValidationService getProofValidationService() {
+
+        return proofValidationService;
+    }
+
+    public void setProofValidationService(ProofValidationService proofValidationService) {
+
+        this.proofValidationService = proofValidationService;
     }
 }

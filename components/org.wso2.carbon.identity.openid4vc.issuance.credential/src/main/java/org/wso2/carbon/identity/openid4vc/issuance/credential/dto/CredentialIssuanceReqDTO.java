@@ -20,6 +20,9 @@ package org.wso2.carbon.identity.openid4vc.issuance.credential.dto;
 
 import org.wso2.carbon.identity.application.authentication.framework.model.AuthenticatedUser;
 
+import java.util.List;
+import java.util.Map;
+
 /**
  * DTO for credential issuance request.
  */
@@ -28,7 +31,8 @@ public class CredentialIssuanceReqDTO {
     private String tenantDomain;
     private String credentialConfigurationId;
     private String token;
-    AuthenticatedUser authenticatedUser;
+    private AuthenticatedUser authenticatedUser;
+    private Map<String, List<String>> proofs;
 
     public String getTenantDomain() {
 
@@ -68,5 +72,15 @@ public class CredentialIssuanceReqDTO {
     public void setAuthenticatedUser(AuthenticatedUser authenticatedUser) {
 
         this.authenticatedUser = authenticatedUser;
+    }
+
+    public Map<String, List<String>> getProofs() {
+
+        return proofs;
+    }
+
+    public void setProofs(Map<String, List<String>> proofs) {
+
+        this.proofs = proofs;
     }
 }

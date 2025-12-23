@@ -32,6 +32,7 @@ public class CredentialIssuerContext {
     private String configurationId;
     private String tenantDomain;
     private Map<String, String> claims;
+    private Map<String, Object> holderPublicKey;
 
     public CredentialIssuerContext() {
         this.claims = new HashMap<>();
@@ -67,5 +68,13 @@ public class CredentialIssuerContext {
 
     public void setClaims(Map<String, String> claims) {
         this.claims = claims;
+    }
+
+    public Map<String, Object> getHolderPublicKey() {
+        return holderPublicKey;
+    }
+
+    public void setHolderPublicKey(Map<String, Object> holderPublicKey) {
+        this.holderPublicKey = holderPublicKey;
     }
 }

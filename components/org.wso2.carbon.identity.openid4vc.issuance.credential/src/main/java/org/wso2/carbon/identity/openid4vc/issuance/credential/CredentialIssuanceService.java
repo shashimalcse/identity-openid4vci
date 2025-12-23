@@ -22,16 +22,20 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.identity.application.authentication.framework.model.AuthenticatedUser;
 import org.wso2.carbon.identity.base.IdentityException;
+import org.wso2.carbon.identity.core.URLBuilderException;
 import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
 import org.wso2.carbon.identity.oauth2.model.AccessTokenDO;
+import org.wso2.carbon.identity.openid4vc.issuance.common.util.CommonUtil;
 import org.wso2.carbon.identity.openid4vc.issuance.credential.dto.CredentialIssuanceReqDTO;
 import org.wso2.carbon.identity.openid4vc.issuance.credential.dto.CredentialIssuanceRespDTO;
+import org.wso2.carbon.identity.openid4vc.issuance.credential.dto.ProofDTO;
 import org.wso2.carbon.identity.openid4vc.issuance.credential.exception.CredentialIssuanceClientException;
 import org.wso2.carbon.identity.openid4vc.issuance.credential.exception.CredentialIssuanceException;
 import org.wso2.carbon.identity.openid4vc.issuance.credential.exception.CredentialIssuanceServerException;
 import org.wso2.carbon.identity.openid4vc.issuance.credential.internal.CredentialIssuanceDataHolder;
 import org.wso2.carbon.identity.openid4vc.issuance.credential.issuer.CredentialIssuer;
 import org.wso2.carbon.identity.openid4vc.issuance.credential.issuer.CredentialIssuerContext;
+import org.wso2.carbon.identity.openid4vc.issuance.credential.proof.ProofValidationService;
 import org.wso2.carbon.identity.openid4vc.issuance.credential.util.CredentialIssuanceExceptionHandler;
 import org.wso2.carbon.identity.openid4vc.template.management.VCTemplateManager;
 import org.wso2.carbon.identity.openid4vc.template.management.exception.VCTemplateMgtException;
@@ -45,6 +49,7 @@ import java.util.Arrays;
 import java.util.Map;
 
 import static org.wso2.carbon.identity.openid4vc.issuance.common.constant.Constants.CredentialIssuerMetadata.SUBJECT_IDENTIFIER;
+import static org.wso2.carbon.identity.openid4vc.issuance.credential.exception.CredentialIssuanceErrorCode.ERROR_CODE_URL_BUILD_ERROR;
 import static org.wso2.carbon.identity.openid4vc.issuance.credential.exception.CredentialIssuanceErrorCode.INSUFFICIENT_SCOPE;
 import static org.wso2.carbon.identity.openid4vc.issuance.credential.exception.CredentialIssuanceErrorCode.INTERNAL_SERVER_ERROR;
 import static org.wso2.carbon.identity.openid4vc.issuance.credential.exception.CredentialIssuanceErrorCode.INVALID_CREDENTIAL_REQUEST;
@@ -89,6 +94,24 @@ public class CredentialIssuanceService {
 
         validateAccessToken(reqDTO);
 
+        // Validate proof and extract holder public key if proofs are present
+        Map<String, Object> holderPublicKey = null;
+        if (reqDTO.getProofs() != null && !reqDTO.getProofs().isEmpty()) {
+            ProofValidationService proofService = CredentialIssuanceDataHolder.getInstance()
+                    .getProofValidationService();
+            if (proofService != null) {
+                String issuerIdentifier = null;
+                try {
+                    issuerIdentifier = CommonUtil.buildCredentialIssuerUrl(reqDTO.getTenantDomain());
+                } catch (URLBuilderException e) {
+                    throw CredentialIssuanceExceptionHandler.handleServerException(ERROR_CODE_URL_BUILD_ERROR, e);
+                }
+                ProofDTO proofDTO = proofService.validateProof(
+                        reqDTO.getProofs(), issuerIdentifier, reqDTO.getTenantDomain());
+                holderPublicKey = proofDTO.getPublicKey();
+            }
+        }
+
         try {
             VCTemplate template = templateManager
                     .getByIdentifier(reqDTO.getCredentialConfigurationId(), reqDTO.getTenantDomain());
@@ -104,12 +127,12 @@ public class CredentialIssuanceService {
             issuerContext.setVCTemplate(template);
             issuerContext.setTenantDomain(reqDTO.getTenantDomain());
             issuerContext.setClaims(getClaims(reqDTO, template));
+            issuerContext.setHolderPublicKey(holderPublicKey);
 
             String credential = credentialIssuer.issueCredential(issuerContext);
             CredentialIssuanceRespDTO respDTO = new CredentialIssuanceRespDTO();
             respDTO.setCredential(credential);
             return respDTO;
-
 
         } catch (VCTemplateMgtException e) {
             throw CredentialIssuanceExceptionHandler.handleServerException(INTERNAL_SERVER_ERROR, e,
@@ -137,7 +160,7 @@ public class CredentialIssuanceService {
             throw CredentialIssuanceExceptionHandler.handleClientException(INVALID_TOKEN);
         }
 
-        String[] scopes  = accessTokenDO.getScope();
+        String[] scopes = accessTokenDO.getScope();
         validateScope(scopes, reqDTO.getCredentialConfigurationId());
         AuthenticatedUser authenticatedUser = accessTokenDO.getAuthzUser();
         reqDTO.setAuthenticatedUser(authenticatedUser);
@@ -146,8 +169,8 @@ public class CredentialIssuanceService {
     /**
      * Retrieve user claims required for the credential from the user store.
      *
-     * @param reqDTO            Credential issuance request DTO
-     * @param template          Verifiable Credential template
+     * @param reqDTO   Credential issuance request DTO
+     * @param template Verifiable Credential template
      * @return Map of user claims
      * @throws CredentialIssuanceException If an error occurs while retrieving claims
      */
@@ -158,7 +181,7 @@ public class CredentialIssuanceService {
         try {
             UserRealm realm = getUserRealm(reqDTO.getTenantDomain());
             AbstractUserStoreManager userStore = getUserStoreManager(reqDTO.getTenantDomain(), realm);
-            Map<String, String> claims =  userStore.getUserClaimValuesWithID(authenticatedUser.getUserId(),
+            Map<String, String> claims = userStore.getUserClaimValuesWithID(authenticatedUser.getUserId(),
                     template.getClaims().toArray(new String[0]), null);
             claims.put(SUBJECT_IDENTIFIER, authenticatedUser.getUserId());
             return claims;
@@ -174,7 +197,7 @@ public class CredentialIssuanceService {
     /**
      * Validates if the required scope from template exists in the JWT token scope.
      *
-     * @param scopes the scopes from token
+     * @param scopes        the scopes from token
      * @param requiredScope the scope required by the template
      * @throws CredentialIssuanceClientException if the required scope is not present in JWT token
      */

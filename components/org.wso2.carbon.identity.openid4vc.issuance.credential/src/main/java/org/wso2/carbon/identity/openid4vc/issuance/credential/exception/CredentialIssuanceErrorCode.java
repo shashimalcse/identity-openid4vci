@@ -70,7 +70,10 @@ public enum CredentialIssuanceErrorCode {
             "An error occurred while signing the verifiable credential."),
     INTERNAL_SERVER_ERROR("VCI-50006", "credential_request_denied",
             "Internal server error.",
-            "An internal server error occurred while processing the credential request.");
+            "An internal server error occurred while processing the credential request."),
+    ERROR_CODE_URL_BUILD_ERROR("VCI-50007", "server_error",
+            "Error building URL.",
+            "An error occurred while building the credential issuer URL.");
 
     private final String code;
     private final String oauth2ErrorCode;

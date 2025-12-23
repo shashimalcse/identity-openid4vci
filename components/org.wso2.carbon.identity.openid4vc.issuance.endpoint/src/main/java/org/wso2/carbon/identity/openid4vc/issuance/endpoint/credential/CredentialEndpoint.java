@@ -18,6 +18,8 @@
 
 package org.wso2.carbon.identity.openid4vc.issuance.endpoint.credential;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
@@ -34,6 +36,10 @@ import org.wso2.carbon.identity.openid4vc.issuance.credential.response.Credentia
 import org.wso2.carbon.identity.openid4vc.issuance.endpoint.credential.error.CredentialErrorResponse;
 import org.wso2.carbon.identity.openid4vc.issuance.endpoint.credential.factories.CredentialIssuanceServiceFactory;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -46,7 +52,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import static org.wso2.carbon.identity.openid4vc.issuance.common.constant.Constants.CREDENTIAL_CONFIGURATION_ID;
-
 
 /**
  * Rest implementation of OID4VCI credential endpoint.
@@ -62,7 +67,7 @@ public class CredentialEndpoint {
     @Consumes("application/json")
     @Produces("application/json")
     public Response requestCredential(@Context HttpServletRequest request, @Context HttpServletResponse response,
-                                      String payload) {
+            String payload) {
 
         String tenantDomain = CommonUtil.resolveTenantDomain();
         try {
@@ -78,8 +83,6 @@ public class CredentialEndpoint {
                         .entity(errorResponse)
                         .build();
             }
-
-
 
             // Parse the JSON payload to extract credential_configuration_id
             JsonObject jsonObject;
@@ -107,8 +110,11 @@ public class CredentialEndpoint {
 
             String credentialConfigurationId = jsonObject.get(CREDENTIAL_CONFIGURATION_ID).getAsString();
 
+            // Parse proofs if present
+            Map<String, List<String>> proofs = parseProofs(jsonObject);
+
             CredentialIssuanceRespDTO credentialIssuanceRespDTO = getCredentialIssuanceRespDTO(authHeader,
-                    tenantDomain, credentialConfigurationId);
+                    tenantDomain, credentialConfigurationId, proofs);
             return buildResponse(credentialIssuanceRespDTO);
 
         } catch (CredentialIssuanceClientException e) {
@@ -175,7 +181,8 @@ public class CredentialEndpoint {
     }
 
     private static CredentialIssuanceRespDTO getCredentialIssuanceRespDTO(String authHeader, String tenantDomain,
-                                                                          String credentialConfigurationId)
+            String credentialConfigurationId,
+            Map<String, List<String>> proofs)
             throws CredentialIssuanceException {
 
         String token = authHeader.substring(7);
@@ -184,6 +191,7 @@ public class CredentialEndpoint {
         credentialIssuanceReqDTO.setTenantDomain(tenantDomain);
         credentialIssuanceReqDTO.setCredentialConfigurationId(credentialConfigurationId);
         credentialIssuanceReqDTO.setToken(token);
+        credentialIssuanceReqDTO.setProofs(proofs);
 
         CredentialIssuanceService credentialIssuanceService = CredentialIssuanceServiceFactory
                 .getCredentialIssuanceService();
@@ -191,7 +199,41 @@ public class CredentialEndpoint {
     }
 
     /**
-     * Determines the appropriate HTTP status code based on the OpenID4VCI/RFC6750 error code.
+     * Parse proofs from the JSON request payload.
+     *
+     * @param jsonObject the parsed JSON object
+     * @return map of proof type to list of proof values, or null if no proofs
+     */
+    private static Map<String, List<String>> parseProofs(JsonObject jsonObject) {
+
+        if (!jsonObject.has("proofs")) {
+            return null;
+        }
+
+        JsonObject proofsObject = jsonObject.getAsJsonObject("proofs");
+        if (proofsObject == null) {
+            return null;
+        }
+
+        Map<String, List<String>> proofs = new HashMap<>();
+
+        for (String proofType : proofsObject.keySet()) {
+            JsonArray proofsArray = proofsObject.getAsJsonArray(proofType);
+            if (proofsArray != null) {
+                List<String> proofList = new ArrayList<>();
+                for (JsonElement element : proofsArray) {
+                    proofList.add(element.getAsString());
+                }
+                proofs.put(proofType, proofList);
+            }
+        }
+
+        return proofs.isEmpty() ? null : proofs;
+    }
+
+    /**
+     * Determines the appropriate HTTP status code based on the OpenID4VCI/RFC6750
+     * error code.
      *
      * @param errorCode the error code
      * @return the appropriate HTTP status

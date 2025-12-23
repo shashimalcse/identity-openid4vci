@@ -24,6 +24,7 @@ import org.wso2.carbon.identity.core.ServiceURL;
 import org.wso2.carbon.identity.core.ServiceURLBuilder;
 import org.wso2.carbon.identity.core.URLBuilderException;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
+import org.wso2.carbon.identity.openid4vc.issuance.common.constant.Constants;
 
 import static org.wso2.carbon.identity.core.util.IdentityCoreConstants.TENANT_NAME_FROM_CONTEXT;
 
@@ -47,6 +48,18 @@ public class CommonUtil {
             builder.setTenant(tenantDomain);
         }
         return builder.build();
+    }
+
+    /**
+     * Build credential issuer URL for the given tenant domain.
+     *
+     * @param tenantDomain Tenant domain.
+     * @return Credential issuer URL.
+     * @throws URLBuilderException URL builder exception.
+     */
+    public static String buildCredentialIssuerUrl(String tenantDomain) throws URLBuilderException {
+
+        return CommonUtil.buildServiceUrl(tenantDomain, Constants.CONTEXT_OPENID4VCI).getAbsolutePublicURL();
     }
 
     /**

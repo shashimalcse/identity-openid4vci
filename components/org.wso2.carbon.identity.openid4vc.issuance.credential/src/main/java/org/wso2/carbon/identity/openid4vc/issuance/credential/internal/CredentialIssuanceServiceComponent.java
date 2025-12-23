@@ -31,6 +31,10 @@ import org.wso2.carbon.identity.openid4vc.issuance.credential.CredentialIssuance
 import org.wso2.carbon.identity.openid4vc.issuance.credential.issuer.handlers.CredentialFormatHandler;
 import org.wso2.carbon.identity.openid4vc.issuance.credential.issuer.handlers.impl.JwtVcJsonFormatHandler;
 import org.wso2.carbon.identity.openid4vc.issuance.credential.issuer.handlers.impl.SdJwtVcFormatHandler;
+import org.wso2.carbon.identity.openid4vc.issuance.credential.nonce.NonceManager;
+import org.wso2.carbon.identity.openid4vc.issuance.credential.nonce.impl.DefaultNonceManager;
+import org.wso2.carbon.identity.openid4vc.issuance.credential.proof.ProofValidationService;
+import org.wso2.carbon.identity.openid4vc.issuance.credential.proof.impl.JwtProofValidator;
 import org.wso2.carbon.identity.openid4vc.template.management.VCTemplateManager;
 import org.wso2.carbon.user.core.service.RealmService;
 
@@ -49,6 +53,17 @@ public class CredentialIssuanceServiceComponent {
 
         try {
             BundleContext bundleContext = context.getBundleContext();
+
+            // Initialize NonceManager
+            NonceManager nonceManager = new DefaultNonceManager();
+            CredentialIssuanceDataHolder.getInstance().setNonceManager(nonceManager);
+            bundleContext.registerService(NonceManager.class, nonceManager, null);
+
+            // Initialize ProofValidationService
+            ProofValidationService proofValidationService = new JwtProofValidator(nonceManager);
+            CredentialIssuanceDataHolder.getInstance().setProofValidationService(proofValidationService);
+            bundleContext.registerService(ProofValidationService.class, proofValidationService, null);
+
             bundleContext.registerService(CredentialIssuanceService.class, new CredentialIssuanceService(), null);
             bundleContext.registerService(CredentialFormatHandler.class, new JwtVcJsonFormatHandler(), null);
             bundleContext.registerService(CredentialFormatHandler.class, new SdJwtVcFormatHandler(), null);
