@@ -26,8 +26,7 @@ import org.wso2.carbon.identity.openid4vc.issuance.metadata.response.CredentialI
 import javax.servlet.Servlet;
 
 /**
- * Serves the JWT VC issuer metadata at the well-known URI required by draft-ietf-oauth-sd-jwt-vc,
- * i.e. {@code /.well-known/jwt-vc-issuer/oid4vci}.
+ * Serves the JWT VC issuer metadata at {@code /.well-known/jwt-vc-issuer/oid4vci}.
  */
 @Component(
         service = Servlet.class,

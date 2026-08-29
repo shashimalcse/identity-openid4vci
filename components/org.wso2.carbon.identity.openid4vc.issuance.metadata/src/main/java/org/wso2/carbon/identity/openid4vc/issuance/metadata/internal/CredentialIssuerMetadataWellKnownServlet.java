@@ -26,8 +26,7 @@ import org.wso2.carbon.identity.openid4vc.issuance.metadata.response.CredentialI
 import javax.servlet.Servlet;
 
 /**
- * Serves the credential issuer metadata at the well-known URI required by OpenID4VCI 1.0
- * section 12.2.2, i.e. {@code /.well-known/openid-credential-issuer/oid4vci}.
+ * Serves the credential issuer metadata at {@code /.well-known/openid-credential-issuer/oid4vci}.
  */
 @Component(
         service = Servlet.class,

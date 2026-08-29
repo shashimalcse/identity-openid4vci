@@ -37,17 +37,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 /**
- * Base servlet for the well-known metadata documents of the credential issuer.
- * <p>
- * OpenID4VCI 1.0 section 12.2.2 (and draft-ietf-oauth-sd-jwt-vc for the JWT VC issuer document)
- * form the well-known URI by inserting the well-known path segment <i>between the host component
- * and the path component</i> of the credential issuer identifier. For a credential issuer
- * identifier of {@code https://host/oid4vci} the metadata therefore has to be served from
- * {@code https://host/.well-known/openid-credential-issuer/oid4vci}, which is outside the
- * {@code /oid4vci} web application. These servlets are registered at the root context to serve it.
- * <p>
- * The path handled is {@code /{context}} for the super tenant and {@code /t/{tenant}/{context}}
- * for a tenant-qualified issuer.
+ * Base servlet for the credential issuer well-known metadata documents, which OpenID4VCI 1.0
+ * section 12.2.2 places at the root context rather than inside the {@code /oid4vci} web
+ * application. Handles {@code /{context}} and {@code /t/{tenant}/{context}}.
  */
 abstract class AbstractMetadataWellKnownServlet extends HttpServlet {
 
@@ -85,7 +77,6 @@ abstract class AbstractMetadataWellKnownServlet extends HttpServlet {
         } catch (CredentialIssuerMetadataException e) {
             LOG.error(String.format("Error while resolving %s for tenant: %s", getMetadataTypeName(), tenantDomain), e);
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            // The failure detail is logged rather than returned: this endpoint is unauthenticated.
             response.getWriter().print(String.format(SERVER_ERROR_RESPONSE, getMetadataTypeName()));
         }
     }
@@ -103,9 +94,7 @@ abstract class AbstractMetadataWellKnownServlet extends HttpServlet {
             throws CredentialIssuerMetadataException;
 
     /**
-     * Human readable name of the metadata document, used in log and error messages.
-     *
-     * @return Name of the metadata document.
+     * @return Name of the metadata document, used in log and error messages.
      */
     protected abstract String getMetadataTypeName();
 

@@ -137,11 +137,11 @@ public class MetadataWellKnownServletTest {
     public Object[][] invalidPaths() {
 
         return new Object[][]{
-                {"/oid4vci/extra"},     // trailing segment beyond the issuer context
-                {"/other"},             // unknown context
-                {"/t/foo.com"},         // tenant without the issuer context
-                {"/"},                  // no context at all
-                {null},                 // servlet mapped without path info
+                {"/oid4vci/extra"},
+                {"/other"},
+                {"/t/foo.com"},
+                {"/"},
+                {null},
         };
     }
 
@@ -163,10 +163,8 @@ public class MetadataWellKnownServletTest {
                 "{\"error\":\"server_error\",\"error_description\":"
                         + "\"Error while resolving OpenID4VCI credential issuer metadata.\"}");
         Assert.assertFalse(capture.getBody().contains("internal detail that must not leak"),
-                "The failure detail should be logged, not returned on an unauthenticated endpoint.");
+                "The failure detail should not be returned");
     }
-
-    // --- helpers -------------------------------------------------------------------------------
 
     @FunctionalInterface
     private interface MetadataSupplier {
@@ -183,7 +181,6 @@ public class MetadataWellKnownServletTest {
 
     private static CredentialIssuerMetadataResponse response(String key, String value) {
 
-        // A single entry is enough to assert the servlet writes exactly what the processor returned.
         return new CredentialIssuerMetadataResponse(Collections.singletonMap(key, value));
     }
 
