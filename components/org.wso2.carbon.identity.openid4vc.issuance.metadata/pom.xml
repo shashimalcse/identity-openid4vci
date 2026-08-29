@@ -38,8 +38,6 @@
         <dependency>
             <groupId>javax.servlet</groupId>
             <artifactId>javax.servlet-api</artifactId>
-            <version>3.1.0</version>
-            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.wso2.carbon.identity.framework</groupId>
@@ -84,8 +82,8 @@
                             org.wso2.carbon.identity.openid4vc.issuance.metadata.internal,
                         </Private-Package>
                         <Import-Package>
-                            javax.servlet; version="[3.1,5)",
-                            javax.servlet.http; version="[3.1,5)",
+                            javax.servlet,
+                            javax.servlet.http,
                             org.osgi.framework; version="${osgi.framework.imp.pkg.version.range}",
                             org.osgi.service.component; version="${osgi.service.component.imp.pkg.version.range}",
                             org.wso2.carbon.identity.base; version="${carbon.identity.framework.imp.pkg.version.range}",
